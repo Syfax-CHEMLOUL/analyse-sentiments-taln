@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sentiment Analysis — TALN UMMTO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">🧠</span>
+      <div>
+        <div class="logo-title">Sentiment Analysis</div>
+        <div class="logo-sub">NLP Pipeline · TALN · UMMTO 4ᵉ Ing-IA</div>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge badge-blue">Python 3.x</span>
+      <span class="badge badge-yellow">🤗 Transformers</span>
+      <span class="badge badge-orange">TensorFlow</span>
+      <div class="api-status" id="apiStatus">
+        <span class="dot"></span> Chargement…
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ── HERO STATS ──────────────────────────────────────────── -->
+<section class="stats-bar">
+  <div class="stat-item">
+    <span class="stat-number">1.6M</span>
+    <span class="stat-label">Tweets (Sentiment140)</span>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat-item">
+    <span class="stat-number">4</span>
+    <span class="stat-label">Modèles NLP</span>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat-item">
+    <span class="stat-number">91%</span>
+    <span class="stat-label">F1-Score (DistilBERT)</span>
+  </div>
+  <div class="stat-divider"></div>
+  <div class="stat-item">
+    <span class="stat-number">7</span>
+    <span class="stat-label">Étapes prétraitement</span>
+  </div>
+</section>
+
+<!-- ── MAIN ───────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- PREDICT PANEL -->
+  <section class="card predict-card">
+    <div class="card-header">
+      <h2>Analyse de sentiment</h2>
+      <p>Entrez un texte et choisissez votre modèle</p>
+    </div>
+
+    <div class="input-group">
+      <textarea id="inputText"
+        placeholder="Ex : I absolutely loved the movie, the plot was brilliant and the acting superb!"
+        rows="4"></textarea>
+      <div class="char-count"><span id="charCount">0</span> / 512</div>
+    </div>
+
+    <!-- Model selector -->
+    <div class="model-grid" id="modelGrid">
+      <!-- populated by JS -->
+    </div>
+
+    <!-- Action buttons -->
+    <div class="action-row">
+      <button class="btn btn-primary" id="btnPredict" onclick="runPredict()">
+        <span class="btn-icon">▶</span> Analyser
+      </button>
+      <button class="btn btn-secondary" id="btnCompare" onclick="runCompare()">
+        <span class="btn-icon">⚡</span> Comparer tous
+      </button>
+      <button class="btn btn-ghost" onclick="clearAll()">Effacer</button>
+    </div>
+
+    <!-- Examples -->
+    <div class="examples">
+      <span class="examples-label">Exemples :</span>
+      <button class="chip chip-pos" onclick="setExample('I absolutely love this! Best experience ever 🎉')">😊 Positif</button>
+      <button class="chip chip-neg" onclick="setExample('This is the worst service I have ever experienced. Completely disappointed.')">😞 Négatif</button>
+      <button class="chip chip-neu" onclick="setExample('The product is okay, not too bad but not great either.')">😐 Neutre</button>
+      <button class="chip chip-neg" onclick="setExample('I cannot believe how terrible this is. I would never recommend it.')">🚫 Négation</button>
+    </div>
+  </section>
+
+  <!-- RESULT PANEL -->
+  <section class="card result-card" id="resultCard" style="display:none">
+    <div class="result-header">
+      <div class="result-icon" id="resultIcon">😊</div>
+      <div>
+        <div class="result-label" id="resultLabel">POSITIF</div>
+        <div class="result-model" id="resultModel">—</div>
+      </div>
+      <div class="result-confidence" id="resultConfidence">—</div>
+    </div>
+
+    <div class="confidence-bar-wrap">
+      <div class="confidence-bar-track">
+        <div class="confidence-bar-fill" id="confidenceBar"></div>
+      </div>
+      <div class="confidence-bar-labels">
+        <span>Négatif</span><span>Positif</span>
+      </div>
+    </div>
+
+    <div class="result-meta">
+      <div class="meta-item"><span class="meta-key">Latence</span><span class="meta-val" id="resultLatency">—</span></div>
+      <div class="meta-item"><span class="meta-key">Confiance</span><span class="meta-val" id="resultConf2">—</span></div>
+    </div>
+
+    <!-- Preprocessing steps -->
+    <details class="steps-details">
+      <summary>🔧 Étapes prétraitement NLP</summary>
+      <ol class="steps-list" id="stepsList"></ol>
+    </details>
+  </section>
+
+  <!-- COMPARE PANEL -->
+  <section class="card compare-card" id="compareCard" style="display:none">
+    <div class="card-header">
+      <h2>Comparaison des modèles</h2>
+      <p id="compareText" class="compare-text-preview"></p>
+    </div>
+    <div class="compare-grid" id="compareGrid"></div>
+  </section>
+
+  <!-- MODELS INFO PANEL -->
+  <section class="card models-card">
+    <div class="card-header">
+      <h2>🤖 Modèles disponibles</h2>
+      <p>Pipeline complet du plus simple au plus puissant</p>
+    </div>
+    <div class="models-list" id="modelsList">
+      <!-- populated by JS -->
+    </div>
+  </section>
+
+  <!-- PIPELINE PANEL -->
+  <section class="card pipeline-card">
+    <div class="card-header">
+      <h2>🔧 Pipeline NLP — 7 étapes de prétraitement</h2>
+    </div>
+    <div class="pipeline-steps">
+      <div class="pipeline-step"><div class="ps-num">1</div><div><div class="ps-title">Nettoyage</div><div class="ps-desc">Suppression URLs, @mentions, #hashtags, caractères non-ASCII</div></div></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step"><div class="ps-num">2</div><div><div class="ps-title">Lowercase</div><div class="ps-desc">Normalisation en minuscules</div></div></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step"><div class="ps-num">3</div><div><div class="ps-title">Segmentation</div><div class="ps-desc">Découpage en phrases (sent_tokenize)</div></div></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step"><div class="ps-num">4</div><div><div class="ps-title">Tokenisation</div><div class="ps-desc">Découpage en tokens (word_tokenize)</div></div></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step"><div class="ps-num">5</div><div><div class="ps-title">Ponctuation</div><div class="ps-desc">Suppression des signes de ponctuation</div></div></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step ps-neg"><div class="ps-num">6</div><div><div class="ps-title">Stopwords</div><div class="ps-desc">Suppression — <strong>négations préservées</strong> (not, never…)</div></div></div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step"><div class="ps-num">7</div><div><div class="ps-title">Lemmatisation</div><div class="ps-desc">Réduction des formes fléchies (WordNetLemmatizer)</div></div></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ── FOOTER ─────────────────────────────────────────────── -->
+<footer class="footer">
+  <div>
+    Projet <strong>TALN</strong> · 4ème année Ingénierie IA · UMMTO · 2025/2026
+    · Supervisé par <strong>Dr. LAZIB Lydia</strong>
+  </div>
+  <div class="footer-links">
+    <a href="/docs" target="_blank">📖 API Docs</a>
+    <a href="/redoc" target="_blank">📋 ReDoc</a>
+    <a href="/health" target="_blank">❤️ Health</a>
+  </div>
+</footer>
+
+<!-- Loading overlay -->
+<div class="overlay" id="overlay">
+  <div class="spinner"></div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
